@@ -1,22 +1,20 @@
-# Bài thực hành 05 — TurtleBot 4 Navigation & YOLO
+# TurtleBot 4 Navigation & YOLO — Lab 05
 
-Nguyễn Văn Tổng · 23020766 · K68E-RE
+AMCL localization using the map from Lab 04, autonomous navigation through
+three goals with Nav2, and YOLO11n object detection from the robot's RGB camera.
 
-TurtleBot 4 định vị bằng AMCL trên bản đồ tuần 4, tự đi lần lượt qua ba goal
-bằng Nav2 và nhận diện vật thể bằng YOLO11n trong khi di chuyển.
+**Platform:** Ubuntu 24.04 · ROS 2 Jazzy · Gazebo Harmonic.
 
-Môi trường: **Ubuntu 24.04 · ROS 2 Jazzy · Gazebo Harmonic**.
+## Installation
 
-## Cài đặt một lần
-
-Clone repo:
+Clone the repository:
 
 ```bash
 git clone https://github.com/VTongg159/hri-assignment-05.git
 cd hri-assignment-05
 ```
 
-Máy đã có ROS 2 Jazzy. Trong thư mục gốc repo, cài các dependency:
+With ROS 2 Jazzy installed, run the following from the repository root:
 
 ```bash
 sudo apt update
@@ -36,13 +34,13 @@ source /opt/ros/jazzy/setup.bash
 python -m colcon build --symlink-install --packages-select turtlebot4_yolo_nav
 ```
 
-Build bằng `python -m colcon` trong virtual environment để node YOLO dùng đúng
-Python đã cài Ultralytics. NumPy được giới hạn dưới 2 để tương thích
-`cv_bridge` của Jazzy.
+Build with `python -m colcon` inside the virtual environment so the YOLO
+executable uses the Python interpreter that has Ultralytics installed.
+NumPy is restricted to version 1.x for compatibility with Jazzy's `cv_bridge`.
 
-## Chạy demo
+## Run the Demo
 
-Trong mỗi terminal mới, vào thư mục gốc repo rồi chạy:
+In a new terminal, open the repository root and run:
 
 ```bash
 source .venv/bin/activate
@@ -53,73 +51,77 @@ export ROS_DOMAIN_ID=19
 ros2 launch turtlebot4_yolo_nav demo.launch.py
 ```
 
-Một lệnh launch mở **Gazebo, RViz2, camera YOLO, AMCL và Nav2**, tự đặt initial
-pose rồi điều khiển robot qua Goal 1 → Goal 2 → Goal 3. Không cần mở thêm
-terminal hoặc đặt goal bằng chuột. Nhấn **Ctrl+C** tại terminal để dừng tất cả.
+The launch file starts **Gazebo, RViz2, YOLO, AMCL, and Nav2**, sets the
+initial pose, and navigates through Goal 1 → Goal 2 → Goal 3. No additional
+terminals or manual navigation goals are required. Press **Ctrl+C** to stop.
 
-Lần đầu cần Internet để tải `yolo11n.pt`. Mesh ghế/cây, texture, world và map
-đã nằm trong package. Khi chạy, YOLO hiển thị bounding box, tên lớp và
-confidence; terminal in kết quả từng goal và vật thể phát hiện được.
+An Internet connection is required if `yolo11n.pt` has not been downloaded.
+The map, world, chair and plant meshes, and textures are included in the
+package. YOLO displays bounding boxes, class names, and confidence scores;
+the terminal reports detections and navigation results.
 
-## Cấu hình
+## Configuration
 
-Các tọa độ trong `src/turtlebot4_yolo_nav/config/goals.yaml` thuộc frame
-`map`, đơn vị mét và radian:
+Goals are defined in `src/turtlebot4_yolo_nav/config/goals.yaml` in the
+`map` frame, with positions in meters and yaw in radians:
 
 | Goal | x | y | yaw |
 | --- | ---: | ---: | ---: |
-| 1 — ghế | -0.30 | 3.00 | 0.00 |
-| 2 — biển báo | 4.20 | 0.00 | 0.00 |
-| 3 — chậu cây | 7.20 | 2.00 | 0.00 |
+| 1 — chair | -0.30 | 3.00 | 0.00 |
+| 2 — stop sign | 4.20 | 0.00 | 0.00 |
+| 3 — potted plant | 7.20 | 2.00 | 0.00 |
 
-Initial pose trong map là `(0, 0, 0)`, tương ứng vị trí spawn
-`(-3.5, -2.5, 0)` trong Gazebo. Goal được gửi tuần tự; mặc định nhiệm vụ dừng
-nếu một goal thất bại hoặc vượt timeout 180 giây.
+The initial map pose is `(0, 0, 0)`, corresponding to the Gazebo spawn pose
+`(-3.5, -2.5, 0)`. Goals are sent sequentially. By default, the mission stops
+if a goal fails or exceeds the 180-second timeout.
 
-`config/yolo.yaml` chọn model `yolo11n.pt`, confidence 0.25, IoU 0.45 và
-inference tối đa 3 Hz trên CPU. `config/nav2_params.yaml` chứa cấu hình AMCL,
-planner, controller và costmap.
+`config/yolo.yaml` selects `yolo11n.pt`, a confidence threshold of 0.25,
+an IoU threshold of 0.45, and a maximum inference rate of 3 Hz on the CPU.
+`config/nav2_params.yaml` contains AMCL, planner, controller, and costmap settings.
 
-## Cấu trúc mã nguồn
+## Package Structure
 
 ```text
 src/turtlebot4_yolo_nav/
-├── config/                  Tham số Nav2, goal và YOLO
-├── launch/                  Demo và các launch thành phần
-├── maps/                    map.yaml, map.pgm từ tuần 4
-├── models/                  Mesh, texture và ATTRIBUTION.md
-├── rviz/                    Cấu hình hiển thị map, path, camera, YOLO
+├── config/                  Nav2, goal, and YOLO parameters
+├── launch/                  Demo and component launch files
+├── maps/                    map.yaml and map.pgm from Lab 04
+├── models/                  Meshes, textures, and ATTRIBUTION.md
+├── rviz/                    Map, path, camera, and YOLO displays
 ├── turtlebot4_yolo_nav/
-│   ├── navigate_goals.py     Gửi NavigateToPose bằng BasicNavigator
-│   └── yolo_detector.py      Camera → cv_bridge → YOLO → ảnh/JSON
-├── worlds/                  World hri_lab_yolo.sdf
-└── test/                    Kiểm tra hàm tạo quaternion
+│   ├── navigate_goals.py     NavigateToPose client using BasicNavigator
+│   └── yolo_detector.py      Camera → cv_bridge → YOLO → image/JSON
+├── worlds/                  hri_lab_yolo.sdf
+└── test/                    Quaternion conversion tests
 ```
 
-| Giao diện | Vai trò |
+| Interface | Purpose |
 | --- | --- |
-| `/map`, `/scan`, `/amcl_pose` | Bản đồ, LiDAR và định vị |
-| `/navigate_to_pose` (action) | Nhận goal và trả feedback/kết quả |
-| `/plan`, `/cmd_vel` | Đường đi và lệnh vận tốc |
-| `/rgbd_camera/image` | Ảnh camera RGB mô phỏng |
-| `/yolo/annotated_image` | Ảnh đã vẽ box để xem trong RViz |
-| `/yolo/detections` | JSON gồm class, confidence và tọa độ box |
-| `/navigation_goals` | Marker ba goal trên bản đồ |
+| `/map`, `/scan`, `/amcl_pose` | Map, LiDAR, and localization |
+| `/navigate_to_pose` (action) | Navigation goals, feedback, and results |
+| `/plan`, `/cmd_vel` | Planned path and velocity commands |
+| `/rgbd_camera/image` | Simulated RGB camera images |
+| `/yolo/annotated_image` | Annotated images for RViz |
+| `/yolo/detections` | JSON containing classes, confidence scores, and boxes |
+| `/navigation_goals` | Goal markers on the map |
 
-## Lưu ý
+## Troubleshooting
 
-- `Package not found`: chạy đủ ba lệnh `source` ở mục Chạy demo.
-- `No module named ultralytics`: activate `.venv` và build lại bằng
+- **Package not found:** run all three `source` commands under Run the Demo.
+- **No module named ultralytics:** activate `.venv` and rebuild with
   `python -m colcon`.
-- Robot chưa hiện ngay khi mở RViz: chờ node điều hướng đặt initial pose và
-  AMCL tạo TF. Không chạy thêm một bản Gazebo/Nav2 khác cùng ROS domain.
-- YOLO có thể nhận thêm `vase` ở phần chậu; nhãn phụ thuộc góc nhìn.
-- Đã kiểm thử robot hoàn thành 3/3 goal với YOLO chạy song song.
+- **Robot not visible immediately in RViz:** allow the navigation node to set
+  the initial pose and AMCL to publish TF. Avoid running another Gazebo/Nav2
+  instance in the same ROS domain.
+- YOLO may also label the plant's pot as `vase`; predictions depend on the view.
 
-## Giấy phép và tài liệu
+The demo has been tested with all three goals completed while YOLO runs
+alongside navigation.
 
-Mã nguồn: [Apache-2.0](LICENSE). Mesh/texture bên thứ ba: **CC BY 4.0**;
-xem [nguồn model và các thay đổi](src/turtlebot4_yolo_nav/models/ATTRIBUTION.md).
+## License and References
+
+Source code: [Apache-2.0](LICENSE). Third-party meshes and textures:
+**CC BY 4.0**. See [model attribution and modifications](src/turtlebot4_yolo_nav/models/ATTRIBUTION.md).
 
 - [Nav2 Simple Commander — Jazzy](https://docs.nav2.org/jazzy/configuration_and_development/simple_commander_api/simple_commander_api/)
 - [Ultralytics Predict](https://docs.ultralytics.com/modes/predict/)
