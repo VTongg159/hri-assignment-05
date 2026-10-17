@@ -1,0 +1,20 @@
+navigate_goals:
+  ros__parameters:
+    use_sim_time: true
+
+    # Pose ban dau cua robot trong he map. Gazebo spawn (-3.5, -2.5, 0)
+    # chinh la (0, 0, 0) tren ban do da quet tu tuan 04.
+    set_initial_pose: true
+    initial_pose: [0.0, 0.0, 0.0]
+
+    # Moi bo ba la [x, y, yaw_radian], theo frame map.
+    goals: [
+      -0.3, 3.0, 0.0,
+      4.2, 0.0, 0.0,
+      7.2, 2.0, 0.0
+    ]
+    goal_names: ["Goal 1 - chair", "Goal 2 - stop sign", "Goal 3 - plant"]
+    goal_timeout: 180.0
+    feedback_period: 2.0
+    stop_on_failure: true
+

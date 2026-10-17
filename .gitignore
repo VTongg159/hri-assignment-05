@@ -1,0 +1,46 @@
+# Publish only the package and repository metadata at the workspace root.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/LICENSE
+!/requirements.txt
+!/src/
+
+/src/*
+!/src/turtlebot4_yolo_nav/
+
+# Build output and Python/editor caches, including inside the package.
+build/
+install/
+log/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.vscode/
+.idea/
+
+# Reports and recordings stay local even if placed inside the package.
+docs/
+figures/
+*.pdf
+*.tex
+*.aux
+*.toc
+*.out
+*.log
+*.mp4
+*.mkv
+*.bag
+*.db3
+*.mcap
+
+# YOLO weights are downloaded on first use; no virtual environments or secrets.
+.venv/
+venv/
+*.pt
+.env
+.env.*
+
